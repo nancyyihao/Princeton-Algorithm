@@ -27,6 +27,8 @@
 
 import edu.princeton.cs.algs4.In;
 import edu.princeton.cs.algs4.StdOut;
+import part1_week4.Board;
+import part1_week4.Solver;
 
 public class PuzzleChecker {
 

@@ -11,6 +11,7 @@
 
 import edu.princeton.cs.algs4.Picture;
 import edu.princeton.cs.algs4.StdOut;
+import week2.SeamCarver;
 
 public class PrintEnergy {
 
