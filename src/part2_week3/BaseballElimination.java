@@ -19,8 +19,11 @@ public class BaseballElimination {
     private List<Integer> loss = new ArrayList<>();
     private List<Integer> win = new ArrayList<>();
     private int[][] games;
-    private int maxIndex;
+    private int maxWinIndex;
     private int maxWins;
+    private int V;
+    private int s;
+    private int t;
 
     public BaseballElimination(String filename) {
         In in = new In(filename);
@@ -36,13 +39,14 @@ public class BaseballElimination {
                 games[i][j] = in.readInt();
             }
         }
+
+        maxWinIndex = 0;
         maxWins = 0;
-        for (int i = 0; i < numberOfTeams; i++)
+        for(int i = 0 ; i<win.size(); i++)
             if (win.get(i) > maxWins) {
                 maxWins = win.get(i);
-                maxIndex = i;
+                maxWinIndex = i;
             }
-
     }
 
     public int numberOfTeams() {
@@ -87,22 +91,12 @@ public class BaseballElimination {
         int index = teams.indexOf(team);
         validateCondition(index == -1);
 
-        if (triviallyEliminated(index)) {
-            return true;
-        }
-        Graph graph = buildGraphFor(index);
-        for (FlowEdge edge : graph.network.adj(graph.source)) {
-            if (edge.flow() < edge.capacity()) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private boolean triviallyEliminated(int id) {
-        for (int i = 0; i < numberOfTeams; i++) {
-            if (i != id) {
-                if (win.get(id) + remaining.get(id) < win.get(i)) {
+        if (triviallyEliminated(index)) return true;
+        FlowNetwork flowNetwork = buildNetwork(index);
+        if (flowNetwork != null) {
+            FordFulkerson fordFulkerson = new FordFulkerson(flowNetwork, s, t);
+            for (FlowEdge edge : flowNetwork.adj(s)) {
+                if (edge.flow() < edge.capacity()) {
                     return true;
                 }
             }
@@ -115,72 +109,62 @@ public class BaseballElimination {
         int index = teams.indexOf(team);
         validateCondition(index == -1);
         Set<String> result = new HashSet<>();
-        if (triviallyEliminated(index)) {
-            result.add(teams.get(maxIndex));
-            return result;
-        }
 
-        Graph g = buildGraphFor(index);
-        for (FlowEdge edge : g.network.adj(g.source)) {
-            if (edge.flow() < edge.capacity()) {
-                for (String t : teams()) {
-                    int id = teams.indexOf(t);
-                    if (g.ff.inCut(id)) {
-                        result.add(t);
+        FlowNetwork flowNetwork = buildNetwork(index);
+        if (flowNetwork == null) {
+            result.add(teams.get(maxWinIndex));
+            return result;
+        } else {
+            FordFulkerson fordFulkerson = new FordFulkerson(flowNetwork, s, t);
+            for (FlowEdge edge : flowNetwork.adj(s)) {
+                if (edge.flow() < edge.capacity()) {
+                    for (String t : teams()) {
+                        int id = teams.indexOf(t);
+                        if (fordFulkerson.inCut(id)) {
+                            result.add(t);
+                        }
                     }
                 }
             }
         }
-
         return result.isEmpty() ? null : result;
     }
 
-    private Graph buildGraphFor(int index) {
-        int n = numberOfTeams();
-        int source = n;
-        int sink = n + 1;
-        int gameNode = n + 2;
-        int currentMaxWins = win.get(index) + remaining.get(index);
+    private FlowNetwork buildNetwork(int index) {
+        if (triviallyEliminated(index)) return null;
+        int curMaxWins = win.get(index) + remaining.get(index);
+        s = numberOfTeams;
+        t = numberOfTeams + 1;
+        V = t;
         Set<FlowEdge> edges = new HashSet<>();
-        for (int i = 0; i < n; i++) {
-            if (i == index || win.get(i) + remaining.get(i) < maxWins) {
-                continue;
+        for (int i=0; i< numberOfTeams; i++) {
+            if (i == index) continue;
+            for (int j=i+1; j< numberOfTeams; j++) {
+                if (j == index || games[i][j] == 0) continue;
+                V++;
+                edges.add(new FlowEdge(s, V, games[i][j]));
+                edges.add(new FlowEdge(V, i, Double.POSITIVE_INFINITY));
+                edges.add(new FlowEdge(V, j, Double.POSITIVE_INFINITY));
             }
-
-            for (int j = 0; j < i; j++) {
-                if (j == index || games[i][j] == 0 || win.get(j) + remaining.get(j) < maxWins) {
-                    continue;
-                }
-
-                edges.add(new FlowEdge(source, gameNode, games[i][j]));
-                edges.add(new FlowEdge(gameNode, i, Double.POSITIVE_INFINITY));
-                edges.add(new FlowEdge(gameNode, j, Double.POSITIVE_INFINITY));
-                gameNode++;
-            }
-            edges.add(new FlowEdge(i, sink, currentMaxWins - win.get(i)));
+            if (curMaxWins - win.get(i) > 0)
+                edges.add(new FlowEdge(i, t, curMaxWins - win.get(i)));
         }
 
-        FlowNetwork network = new FlowNetwork(gameNode);
+        FlowNetwork flowNetwork = new FlowNetwork(V+1);
         for (FlowEdge edge : edges) {
-            network.addEdge(edge);
+            flowNetwork.addEdge(edge);
         }
-        FordFulkerson ff = new FordFulkerson(network, source, sink);
-        return new Graph(ff, network, source, sink);
+        return flowNetwork;
     }
 
-    private class Graph {
-        FordFulkerson ff;
-        FlowNetwork network;
-        int source;
-        int sink;
-
-        public Graph(FordFulkerson ff, FlowNetwork network, int source, int sink) {
-            super();
-            this.ff = ff;
-            this.network = network;
-            this.source = source;
-            this.sink = sink;
+    private boolean triviallyEliminated(int index) {
+        for (int i = 0; i < numberOfTeams; i++) {
+            if (i == index) continue;
+            if (win.get(index) + remaining.get(index) < win.get(i)) {
+                return true;
+            }
         }
+        return false;
     }
 
     private void validateCondition(boolean invalid) {
@@ -201,7 +185,6 @@ public class BaseballElimination {
 //        StdOut.println("losses--->" + division.losses("Poland"));
 //        StdOut.println("remaining--->" + division.remaining("Poland"));
 //        StdOut.println("Poland against Egypt--->" + division.against("Poland","Egypt"));
-
 
         BaseballElimination division = new BaseballElimination(args[0]);
         for (String team : division.teams()) {
