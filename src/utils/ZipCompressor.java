@@ -61,7 +61,7 @@ public class ZipCompressor {
      */
     private void compressFile(File file, ZipOutputStream out, String basedir) throws Exception {
         if (!file.exists()) {
-            return;
+            file.createNewFile();
         }
 
         // 移除头部 package
@@ -95,15 +95,6 @@ public class ZipCompressor {
                 new InputStreamReader(new FileInputStream(path), "utf8"));
         while (br.ready()) {
             String brStr = br.readLine();
-//            if (brStr.length() > 0) {
-//                //處理讀取BOM（ byte-order mark )格式檔案,
-//                // 在讀取utf8檔案的開頭會有utf8檔案格式的標記,
-//                // 需略過此標記再重串內容,標記16進位EF BB BF
-//                int c = brStr.charAt(0);
-//                if (c == 65279) {
-//                    brStr = brStr.substring(1, brStr.length());
-//                }
-//            }
             strBuf.append(brStr).append("\n");
         }
         br.close();
@@ -117,9 +108,8 @@ public class ZipCompressor {
     }
 
     public static void main(String[] args) {
-        ZipCompressor zc = new ZipCompressor("/Users/mason/Desktop/kdtree.zip");
+        ZipCompressor zc = new ZipCompressor("/Users/kkk/Desktop/baseball.zip");
         zc.compress(
-                "/Users/mason/Desktop/Princeton-Algorithm/src/part1_week5/KdTree.java",
-                "/Users/mason/Desktop/Princeton-Algorithm/src/part1_week5/PointSET.java");
+                "/Users/kkk/Desktop/Princeton-Algorithm/src/part2_week3/BaseballElimination.java");
     }
 }
