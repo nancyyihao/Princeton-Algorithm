@@ -67,6 +67,8 @@ public class ZipCompressor {
         // 移除头部 package
         String txt = getFileText(file.getAbsolutePath());
         txt = txt.replaceAll("package .*;", "");
+        txt = txt.replaceAll("import part2_week4.test.BoggleBoard;", "");
+
         File tmpFile = new File(file.getParent() + "/test/" + file.getName());
         if (!tmpFile.exists()) {
             tmpFile.createNewFile();
@@ -108,8 +110,8 @@ public class ZipCompressor {
     }
 
     public static void main(String[] args) {
-        ZipCompressor zc = new ZipCompressor("/Users/kkk/Desktop/baseball.zip");
+        ZipCompressor zc = new ZipCompressor("/Users/jasonkent27/Desktop/boggle.zip");
         zc.compress(
-                "/Users/kkk/Desktop/Princeton-Algorithm/src/part2_week3/BaseballElimination.java");
+                "/Users/jasonkent27/Desktop/Princeton-Algorithm/src/part2_week4/BoggleSolver.java");
     }
 }
