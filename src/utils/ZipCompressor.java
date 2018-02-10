@@ -110,8 +110,10 @@ public class ZipCompressor {
     }
 
     public static void main(String[] args) {
-        ZipCompressor zc = new ZipCompressor("/Users/jasonkent27/Desktop/boggle.zip");
+        ZipCompressor zc = new ZipCompressor("/Users/kkk/Desktop/burrows.zip");
         zc.compress(
-                "/Users/jasonkent27/Desktop/Princeton-Algorithm/src/part2_week4/BoggleSolver.java");
+                "/Users/kkk/Desktop/Princeton-Algorithm/src/part2_week5/BurrowsWheeler.java",
+                "/Users/kkk/Desktop/Princeton-Algorithm/src/part2_week5/CircularSuffixArray.java",
+                "/Users/kkk/Desktop/Princeton-Algorithm/src/part2_week5/MoveToFront.java");
     }
 }
